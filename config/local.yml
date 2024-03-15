@@ -1,0 +1,20 @@
+env: local
+
+server:
+  url: localhost:8080
+
+#db:
+#  user: postgres
+#  password: postgres
+#  name: film_library
+#  host: film_library_db
+#  port: 5432
+#  path: ./migrations/
+
+db:
+  user: postgres
+  password: 1234
+  name: film_library
+  host: localhost
+  port: 5432
+  path: ./migrations/

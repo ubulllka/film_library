@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+  film_library_db:
+    image: 'postgres:15-alpine'
+    hostname: film_library_db
+    environment:
+      - POSTGRES_DB=film_library
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5435:5432"
+
+  film_library:
+    container_name: film_library
+    build:
+      context: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - film_library_db
