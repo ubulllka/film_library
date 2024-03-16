@@ -1,7 +1,7 @@
 env: local
 
 server:
-  url: localhost:8080
+  url: :8080
 
 #db:
 #  user: postgres

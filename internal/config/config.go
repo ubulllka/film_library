@@ -30,3 +30,7 @@ func InitConfig() error {
 	log.Print("Init config")
 	return nil
 }
+
+func GetConf() Config {
+	return CONFIG
+}

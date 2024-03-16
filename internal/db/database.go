@@ -1,9 +1,8 @@
 package db
 
 import (
-	"context"
+	"database/sql"
 	"fmt"
-	"github.com/jackc/pgx/v5"
 	_ "github.com/lib/pq"
 	"log"
 	"os"
@@ -12,14 +11,22 @@ import (
 	"vk/internal/config"
 )
 
-func runMigrations(db *pgx.Conn, migrationsPath string) error {
+const (
+	USERS     = "users"
+	ACTORS    = "actors"
+	FILMS     = "films"
+	FILMACTOR = "film_actor"
+	PARSEDATE = "02-01-2006"
+)
+
+func runMigrations(db *sql.DB, migrationsPath string) error {
 	files, err := os.ReadDir(migrationsPath)
 	if err != nil {
 		return err
 	}
 
 	for _, file := range files {
-		if strings.HasSuffix(file.Name(), ".sql") {
+		if strings.HasSuffix(file.Name(), ".up.sql") {
 			filePath := filepath.Join(migrationsPath, file.Name())
 			content, err := os.ReadFile(filePath)
 			if err != nil {
@@ -27,7 +34,7 @@ func runMigrations(db *pgx.Conn, migrationsPath string) error {
 				return err
 			}
 
-			_, err = db.Exec(context.Background(), string(content))
+			_, err = db.Exec(string(content))
 			if err != nil {
 				log.Fatalf("Error applying migrations: %v", err)
 				return err
@@ -40,29 +47,29 @@ func runMigrations(db *pgx.Conn, migrationsPath string) error {
 	return nil
 }
 
-func InitializeDB() error {
-	info := config.CONFIG.DB
-	urlPostgres := fmt.Sprintf("postgres://%s:%s@%s:%d/%s",
-		info.User, info.Password, info.Host, info.Port, info.Name)
+func InitializeDB() (*sql.DB, error) {
+	info := config.GetConf().DB
 
-	conn, err := pgx.Connect(context.Background(), urlPostgres)
+	urlPostgres := fmt.Sprintf("user=%s dbname=%s sslmode=disable password=%s host=%s port=%d",
+		info.User, info.Name, info.Password, info.Host, info.Port)
+
+	db, err := sql.Open("postgres", urlPostgres)
 	if err != nil {
 		log.Printf("Unable to connect to database: %v\n", err)
-		log.Println(urlPostgres)
+		//log.Println(urlPostgres)
 		os.Exit(1)
 	}
-	defer conn.Close(context.Background())
 
-	err = conn.Ping(context.Background())
+	err = db.Ping()
 	if err != nil {
 		log.Panic(err)
-		return err
+		return nil, err
 	}
 
-	if err := runMigrations(conn, info.Path); err != nil {
+	if err := runMigrations(db, info.Path); err != nil {
 		log.Fatalf("Error applying migrations: %v", err)
 	}
 
 	log.Print("Init database")
-	return nil
+	return db, nil
 }
