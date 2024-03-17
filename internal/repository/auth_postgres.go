@@ -15,7 +15,7 @@ func NewAuthPostgres(db *sql.DB) *AuthPostgres {
 	return &AuthPostgres{db: db}
 }
 
-func (r *AuthPostgres) CreateUser(user models.User) (int, error) {
+func (r *AuthPostgres) Create(user models.User) (int, error) {
 	var id int
 	query := fmt.Sprintf("INSERT INTO %s (username, password_hash, user_role) values ($1, $2, $3) RETURNING id", db.USERS)
 
@@ -27,7 +27,7 @@ func (r *AuthPostgres) CreateUser(user models.User) (int, error) {
 	return id, nil
 }
 
-func (r *AuthPostgres) GetUser(username, password string) (models.User, error) {
+func (r *AuthPostgres) GetOne(username, password string) (models.User, error) {
 	var id int
 	var role string
 	query := fmt.Sprintf("SELECT id, user_role FROM %s WHERE username=$1 AND password_hash=$2", db.USERS)
@@ -37,7 +37,7 @@ func (r *AuthPostgres) GetUser(username, password string) (models.User, error) {
 	return models.User{Id: id, Username: username, Password: password, Role: role}, nil
 }
 
-func (r *AuthPostgres) GetUserById(id int) (models.User, error) {
+func (r *AuthPostgres) GetOneById(id int) (models.User, error) {
 	var username, password, role string
 	query := fmt.Sprintf("SELECT username, password_hash, user_role FROM %s WHERE id=$1", db.USERS)
 	if err := r.db.QueryRow(query, id).Scan(&username, &password, &role); err != nil {

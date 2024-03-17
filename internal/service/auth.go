@@ -7,7 +7,6 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"time"
 	"vk/internal/models"
-	"vk/internal/repository"
 )
 
 const (
@@ -22,24 +21,24 @@ type tokenClaims struct {
 }
 
 type AuthService struct {
-	repo repository.Authorization
+	repo Authorization
 }
 
-func NewAuthService(repo repository.Authorization) *AuthService {
+func NewAuthService(repo Authorization) *AuthService {
 	return &AuthService{repo: repo}
 }
 
 func (s *AuthService) CreateUser(user models.User) (int, error) {
 	user.Password = generatePasswordHash(user.Password)
-	_, err := s.repo.GetUser(user.Username, user.Password)
+	_, err := s.repo.GetOne(user.Username, user.Password)
 	if err == nil {
 		return 0, errors.New("username is not free")
 	}
-	return s.repo.CreateUser(user)
+	return s.repo.Create(user)
 }
 
 func (s *AuthService) GenerateToken(username, password string) (string, error) {
-	user, err := s.repo.GetUser(username, generatePasswordHash(password))
+	user, err := s.repo.GetOne(username, generatePasswordHash(password))
 	if err != nil {
 		return "", err
 	}
@@ -73,7 +72,7 @@ func (s *AuthService) ParseToken(accessToken string) (int, error) {
 }
 
 func (s *AuthService) GetUser(id int) (models.User, error) {
-	return s.repo.GetUserById(id)
+	return s.repo.GetOneById(id)
 }
 
 func generatePasswordHash(password string) string {

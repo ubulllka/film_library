@@ -2,9 +2,10 @@ package repository
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
-	"strconv"
+	"strings"
 	"time"
 	"vk/internal/db"
 	"vk/internal/models"
@@ -19,8 +20,7 @@ func NewActorPostgres(db *sql.DB) *ActorPostgres {
 	return &ActorPostgres{db: db}
 }
 
-func (r *ActorPostgres) getFilmNames(id string) ([]string, error) {
-
+func (r *ActorPostgres) getFilmNames(id int) ([]string, error) {
 	var filmsID []int
 	queryFilm := fmt.Sprintf("SELECT film_id FROM %s WHERE actor_id=$1", db.FILMACTOR)
 	rows, err := r.db.Query(queryFilm, id)
@@ -29,6 +29,7 @@ func (r *ActorPostgres) getFilmNames(id string) ([]string, error) {
 		return nil, err
 	}
 	defer rows.Close()
+
 	for rows.Next() {
 		var filmId int
 		rows.Scan(&filmId)
@@ -39,21 +40,21 @@ func (r *ActorPostgres) getFilmNames(id string) ([]string, error) {
 	filmsNames := make([]string, 0)
 	for _, filmId := range filmsID {
 		queryName := fmt.Sprintf("SELECT film_name FROM %s WHERE id=$1", db.FILMS)
-		rowsName, err := r.db.Query(queryName, filmId)
-		if err != nil {
+		rowsName := r.db.QueryRow(queryName, filmId)
+
+		var fName string
+		if err := rowsName.Scan(&fName); err != nil {
 			log.Panic(err)
 			return nil, err
 		}
-		defer rowsName.Close()
-		var fName string
-		rowsName.Scan(&fName)
+
 		filmsNames = append(filmsNames, fName)
 	}
 	return filmsNames, nil
 }
 
-func (r *ActorPostgres) GetAllActors() ([]DTO.ActorDTO, error) {
-	var actorsDTO []DTO.ActorDTO
+func (r *ActorPostgres) GetAll() ([]DTO.ActorDTO, error) {
+
 	query := fmt.Sprintf("SELECT id, actor_name, sex, b_date FROM %s", db.ACTORS)
 	rows, err := r.db.Query(query)
 	if err != nil {
@@ -61,8 +62,11 @@ func (r *ActorPostgres) GetAllActors() ([]DTO.ActorDTO, error) {
 		return nil, err
 	}
 	defer rows.Close()
+
+	actorsDTO := make([]DTO.ActorDTO, 0)
 	for rows.Next() {
-		var id, actorName, sex string
+		var id int
+		var actorName, sex string
 		var bDate time.Time
 		if err := rows.Scan(&id, &actorName, &sex, &bDate); err != nil {
 			log.Fatal(err)
@@ -86,14 +90,18 @@ func (r *ActorPostgres) GetAllActors() ([]DTO.ActorDTO, error) {
 	return actorsDTO, nil
 }
 
-func (r *ActorPostgres) GetActor(id string) (DTO.ActorDTO, error) {
+func (r *ActorPostgres) GetOne(id int) (DTO.ActorDTO, error) {
 	query := fmt.Sprintf("SELECT actor_name, sex, b_date FROM %s WHERE id=$1", db.ACTORS)
 	var actorName, sex string
 	var bDate time.Time
-	idn, _ := strconv.Atoi(id)
-	if err := r.db.QueryRow(query, idn).Scan(&actorName, &sex, &bDate); err != nil {
-		log.Panic(err)
-		return DTO.ActorDTO{}, err
+	if err := r.db.QueryRow(query, id).Scan(&actorName, &sex, &bDate); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return DTO.ActorDTO{}, errors.New("empty result")
+		} else {
+			log.Panic(err)
+			return DTO.ActorDTO{}, err
+		}
+
 	}
 	filmsNames, err := r.getFilmNames(id)
 	if err != nil {
@@ -110,7 +118,7 @@ func (r *ActorPostgres) GetActor(id string) (DTO.ActorDTO, error) {
 	return actor, nil
 }
 
-func (r *ActorPostgres) CreateActor(actor models.Actor) (int, error) {
+func (r *ActorPostgres) Create(actor models.Actor) (int, error) {
 	var id int
 	query := fmt.Sprintf("INSERT INTO %s (actor_name, sex, b_date) values ($1, $2, $3) RETURNING id", db.ACTORS)
 	row := r.db.QueryRow(query, actor.Name, actor.Sex, actor.Date)
@@ -120,4 +128,50 @@ func (r *ActorPostgres) CreateActor(actor models.Actor) (int, error) {
 	}
 
 	return id, nil
+}
+
+func (r *ActorPostgres) Update(id int, input DTO.ActorUpdate) error {
+	setValues := make([]string, 0)
+	args := make([]interface{}, 0)
+	argId := 1
+
+	if input.Name != nil {
+		setValues = append(setValues, fmt.Sprintf("actor_name=$%d", argId))
+		args = append(args, *input.Name)
+		argId++
+	}
+	if input.Sex != nil {
+		setValues = append(setValues, fmt.Sprintf("sex=$%d", argId))
+		args = append(args, *input.Sex)
+		argId++
+	}
+
+	if input.Date != nil {
+		setValues = append(setValues, fmt.Sprintf("b_date=$%d", argId))
+		args = append(args, *input.Date)
+		argId++
+	}
+
+	setQuery := strings.Join(setValues, ", ")
+
+	query := fmt.Sprintf("UPDATE %s SET %s WHERE id=$%d", db.ACTORS, setQuery, argId)
+	args = append(args, id)
+	log.Println("query: " + query)
+
+	if _, err := r.db.Exec(query, args...); err != nil {
+		log.Panic(err)
+		return err
+	}
+
+	return nil
+}
+
+func (r *ActorPostgres) Delete(id int) error {
+	query := fmt.Sprintf("DELETE FROM %s WHERE id=$1", db.ACTORS)
+
+	if _, err := r.db.Exec(query, id); err != nil {
+		log.Panic(err)
+		return err
+	}
+	return nil
 }

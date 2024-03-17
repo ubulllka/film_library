@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS users(
 
 CREATE TABLE IF NOT EXISTS actors(
     id                  SERIAL PRIMARY KEY  NOT NULL UNIQUE,
-    actor_name          VARCHAR(255)        NOT NULL,
+    actorName          VARCHAR(255)        NOT NULL,
     sex                 VARCHAR(255)        NOT NULL,
     b_date              DATE                NOT NULL
 );

@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
 	"net/http"
+	"strconv"
 	"vk/internal/models/DTO"
 )
 
@@ -30,8 +31,13 @@ func (h *Handler) GetALLActors(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetActor(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
+	sid := mux.Vars(r)["id"]
 
+	id, err := strconv.Atoi(sid)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	actor, err := h.service.Actor.GetActor(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -63,16 +69,18 @@ func (h *Handler) SaveActor(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
 	actor, err := actorSave.GetActor()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
 	validate := validator.New()
 
 	if err := validate.Struct(actor); err != nil {
-		errors := err.(validator.ValidationErrors)
-		http.Error(w, fmt.Sprintf("Validation error: %s", errors), http.StatusBadRequest)
+		errs := err.(validator.ValidationErrors)
+		http.Error(w, fmt.Sprintf("Validation error: %s", errs), http.StatusBadRequest)
 		return
 	}
 
@@ -87,22 +95,56 @@ func (h *Handler) SaveActor(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func UpdateActor(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-	_ = id
-	userRole := r.Context().Value(USERROLE)
+func (h *Handler) UpdateActor(w http.ResponseWriter, r *http.Request) {
+	sid := mux.Vars(r)["id"]
+	id, err := strconv.Atoi(sid)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	userRole := context.Get(r, USERROLE)
 	if userRole != "ADMIN" {
 		http.Error(w, errors.New("not enough rights").Error(), http.StatusForbidden)
 		return
 	}
+
+	var input DTO.ActorUpdate
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := h.service.Actor.UpdateActor(id, input); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(fmt.Sprintf(fmt.Sprintf("{ \"message\": \"Actor %d update\"}", id))))
 }
 
-func DeleteActor(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-	_ = id
-	userRole := r.Context().Value(USERROLE)
+func (h *Handler) DeleteActor(w http.ResponseWriter, r *http.Request) {
+	sid := mux.Vars(r)["id"]
+	id, err := strconv.Atoi(sid)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	userRole := context.Get(r, USERROLE)
 	if userRole != "ADMIN" {
 		http.Error(w, errors.New("not enough rights").Error(), http.StatusForbidden)
 		return
 	}
+
+	if err := h.service.Actor.DeleteActor(id); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(fmt.Sprintf(fmt.Sprintf("{ \"message\": \"Actor %d delete\"}", id))))
 }

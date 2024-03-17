@@ -6,7 +6,6 @@ import (
 	"vk/internal/config"
 	"vk/internal/db"
 	"vk/internal/handler"
-	"vk/internal/repository"
 	"vk/internal/service"
 )
 
@@ -23,8 +22,8 @@ func Run() error {
 	}
 	defer conn.Close()
 
-	repo := repository.NewRepository(conn)
-	serv := service.NewService(repo)
+	repo := service.NewRepository(conn)
+	serv := handler.NewService(repo)
 	hand := handler.NewHandler(serv)
 
 	serverUrl := config.GetConf().Server.URL

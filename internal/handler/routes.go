@@ -2,14 +2,13 @@ package handler
 
 import (
 	"github.com/gorilla/mux"
-	"vk/internal/service"
 )
 
 type Handler struct {
-	service *service.Service
+	service *Service
 }
 
-func NewHandler(service *service.Service) *Handler {
+func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
 }
 
@@ -21,14 +20,13 @@ func (h *Handler) Routes() *mux.Router {
 
 	api := r.PathPrefix("/api/v1").Subrouter()
 	api.Use(h.UserIdentify)
-	api.HandleFunc("/", Hello).Methods("GET")
 
 	actors := api.PathPrefix("/actors").Subrouter()
 	actors.HandleFunc("/", h.GetALLActors).Methods("GET")
 	actors.HandleFunc("/{id}", h.GetActor).Methods("GET")
 	actors.HandleFunc("/", h.SaveActor).Methods("POST")
-	actors.HandleFunc("/{id}", UpdateActor).Methods("PATCH")
-	actors.HandleFunc("/{id}", DeleteActor).Methods("DELETE")
+	actors.HandleFunc("/{id}", h.UpdateActor).Methods("PATCH")
+	actors.HandleFunc("/{id}", h.DeleteActor).Methods("DELETE")
 
 	films := api.PathPrefix("/films").Subrouter()
 	films.HandleFunc("/", h.GetALLFilms).Methods("GET")
