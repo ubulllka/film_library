@@ -2,6 +2,8 @@ package handler
 
 import (
 	"github.com/gorilla/mux"
+	"github.com/swaggo/http-swagger/v2"
+	_ "vk/docs"
 )
 
 type Handler struct {
@@ -14,6 +16,9 @@ func NewHandler(service *Service) *Handler {
 
 func (h *Handler) Routes() *mux.Router {
 	r := mux.NewRouter()
+
+	r.PathPrefix("/swagger").Handler(httpSwagger.WrapHandler)
+
 	auth := r.PathPrefix("/auth").Subrouter()
 	auth.HandleFunc("/sing-up", h.SingUp).Methods("POST")
 	auth.HandleFunc("/sing-in", h.SingIn).Methods("POST")

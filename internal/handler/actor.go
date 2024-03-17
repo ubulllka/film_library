@@ -12,67 +12,105 @@ import (
 	"vk/internal/models/DTO"
 )
 
+// GetALLActors
+// @Summary		Get All Actors
+// @Tags		actors
+// @Description	get all actors
+// @Accept		json
+// @Produce		json
+// @Success		200		{array}		DTO.ActorDTO
+// @Failure		500		{object}	errorResponse
+// @Failure		default	{object}	errorResponse
+// @Router		/api/v1/actors [get]
 func (h *Handler) GetALLActors(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	actors, err := h.service.Actor.GetAllActors()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		newErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	actorsByte, err := json.Marshal(actors)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		newErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(actorsByte)
 }
 
+// GetActor
+// @Summary		Get Actor
+// @Tags		actors
+// @Description	get actor by id
+// @Accept		json
+// @Produce		json
+// @Param		id		path		int	true	"actor id"
+// @Success		200		{array}		DTO.ActorDTO
+// @Failure		400		{object}	errorResponse
+// @Failure		500		{object}	errorResponse
+// @Failure		default	{object}	errorResponse
+// @Router		/api/v1/actors/{id} [get]
 func (h *Handler) GetActor(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	sid := mux.Vars(r)["id"]
 
 	id, err := strconv.Atoi(sid)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		newErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	actor, err := h.service.Actor.GetActor(id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		newErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	actorByte, err := json.Marshal(actor)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		newErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(actorByte)
-
 }
 
+// SaveActor
+// @Summary		Save Actor
+// @Security	ApiKeyAuth
+// @Tags		actors
+// @Description	create actor
+// @Accept		json
+// @Produce		json
+// @Param		actorSave	body		DTO.ActorInput	true	"actor info"
+// @Success		200			{integer}	integer			1
+// @Failure		400,403		{object}	errorResponse
+// @Failure		500			{object}	errorResponse
+// @Failure		default		{object}	errorResponse
+// @Router		/api/v1/actors [post]
 func (h *Handler) SaveActor(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	userRole := context.Get(r, USERROLE)
 	fmt.Println(userRole)
 	if userRole != "ADMIN" {
-		http.Error(w, errors.New("not enough rights").Error(), http.StatusForbidden)
+		newErrorResponse(w, http.StatusForbidden, errors.New("not enough rights").Error())
 		return
 	}
 
 	var actorSave DTO.ActorInput
 	if err := json.NewDecoder(r.Body).Decode(&actorSave); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		newErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	actor, err := actorSave.GetActor()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		newErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -80,71 +118,102 @@ func (h *Handler) SaveActor(w http.ResponseWriter, r *http.Request) {
 
 	if err := validate.Struct(actor); err != nil {
 		errs := err.(validator.ValidationErrors)
-		http.Error(w, fmt.Sprintf("Validation error: %s", errs), http.StatusBadRequest)
+		newErrorResponse(w, http.StatusBadRequest, errs.Error())
 		return
 	}
 
 	id, err := h.service.Actor.CreateActor(actor)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		newErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
+
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte(fmt.Sprintf(fmt.Sprintf("{ \"message\": \"Actor %d create\"}", id))))
+	_, _ = w.Write([]byte(fmt.Sprintf("{ \"id\": %d}", id)))
 
 }
 
+// UpdateActor
+// @Summary		Update Actor
+// @Security	ApiKeyAuth
+// @Tags		actors
+// @Description	update actor
+// @Accept		json
+// @Produce		json
+// @Param		id		path		int				true	"actor id"
+// @Param		input	body		DTO.ActorUpdate	true	"actor update info"
+// @Success		200		{object}	statusResponse
+// @Failure		400,403	{object}	errorResponse
+// @Failure		500		{object}	errorResponse
+// @Failure		default	{object}	errorResponse
+// @Router		/api/v1/actors/{id} [patch]
 func (h *Handler) UpdateActor(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	sid := mux.Vars(r)["id"]
 	id, err := strconv.Atoi(sid)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		newErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	userRole := context.Get(r, USERROLE)
 	if userRole != "ADMIN" {
-		http.Error(w, errors.New("not enough rights").Error(), http.StatusForbidden)
+		newErrorResponse(w, http.StatusForbidden, errors.New("not enough rights").Error())
 		return
 	}
 
 	var input DTO.ActorUpdate
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		newErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	if err := h.service.Actor.UpdateActor(id, input); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		newErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte(fmt.Sprintf(fmt.Sprintf("{ \"message\": \"Actor %d update\"}", id))))
+	result, _ := json.Marshal(statusResponse{"ok"})
+	_, _ = w.Write(result)
 }
 
+// DeleteActor
+// @Summary		Delete Actor
+// @Security	ApiKeyAuth
+// @Tags		actors
+// @Description	delete actor
+// @Accept		json
+// @Produce		json
+// @Param		id		path		int	true	"actor id"
+// @Success		200		{object}	statusResponse
+// @Failure		400,403	{object}	errorResponse
+// @Failure		500		{object}	errorResponse
+// @Failure		default	{object}	errorResponse
+// @Router		/api/v1/actors/{id} [delete]
 func (h *Handler) DeleteActor(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	sid := mux.Vars(r)["id"]
 	id, err := strconv.Atoi(sid)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		newErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	userRole := context.Get(r, USERROLE)
 	if userRole != "ADMIN" {
-		http.Error(w, errors.New("not enough rights").Error(), http.StatusForbidden)
+		newErrorResponse(w, http.StatusForbidden, errors.New("not enough rights").Error())
 		return
 	}
 
 	if err := h.service.Actor.DeleteActor(id); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		newErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte(fmt.Sprintf(fmt.Sprintf("{ \"message\": \"Actor %d delete\"}", id))))
+	result, _ := json.Marshal(statusResponse{"ok"})
+	_, _ = w.Write(result)
 }

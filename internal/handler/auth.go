@@ -8,30 +8,43 @@ import (
 	"vk/internal/models"
 )
 
+// SingUp
+// @Summary		Sing Up
+// @Tags		auth
+// @Description	create account
+// @Accept		json
+// @Produce		json
+// @Param		user	body		models.User	true	"account info"
+// @Success		200		{integer}	integer		1
+// @Failure		400		{object}	errorResponse
+// @Failure		500		{object}	errorResponse
+// @Failure		default	{object}	errorResponse
+// @Router		/auth/sign-up [post]
 func (h *Handler) SingUp(w http.ResponseWriter, r *http.Request) {
 	var user models.User
+	w.Header().Set("Content-Type", "application/json")
 
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		newErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	validate := validator.New()
 
 	if err := validate.Struct(user); err != nil {
-		errors := err.(validator.ValidationErrors)
-		http.Error(w, fmt.Sprintf("Validation error: %s", errors), http.StatusBadRequest)
+		errs := err.(validator.ValidationErrors)
+		newErrorResponse(w, http.StatusBadRequest, errs.Error())
 		return
 	}
 
 	id, err := h.service.Authorization.CreateUser(user)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		newErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
+
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte(fmt.Sprintf(fmt.Sprintf("{ \"id\": %d}", id))))
+	_, _ = w.Write([]byte(fmt.Sprintf("{ \"id\": %d}", id)))
 }
 
 type UserInType struct {
@@ -39,28 +52,42 @@ type UserInType struct {
 	Password string `json:"password" validate:"required"`
 }
 
+// SingIn
+// @Summary		Sing In
+// @Tags		auth
+// @Description	login
+// @Accept		json
+// @Produce		json
+// @Param		user	body		UserInType	true	"credentials"
+// @Success		200		{string}	string		"token"
+// @Failure		400		{object}	errorResponse
+// @Failure		500		{object}	errorResponse
+// @Failure		default	{object}	errorResponse
+// @Router		/auth/sign-in [post]
 func (h *Handler) SingIn(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	var user UserInType
 
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		newErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	validate := validator.New()
 
 	if err := validate.Struct(user); err != nil {
-		errors := err.(validator.ValidationErrors)
-		http.Error(w, fmt.Sprintf("Validation error: %s", errors), http.StatusBadRequest)
+		errs := err.(validator.ValidationErrors)
+		newErrorResponse(w, http.StatusBadRequest, errs.Error())
 		return
 	}
 
 	token, err := h.service.Authorization.GenerateToken(user.Username, user.Password)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		newErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
+
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte(fmt.Sprintf("{ \"token\": \"%s\"}", token)))
 }

@@ -1,0 +1,611 @@
+basePath: /
+definitions:
+  DTO.ActorDTO:
+    properties:
+      date:
+        type: string
+      films:
+        items:
+          $ref: '#/definitions/DTO.FilmForActor'
+        type: array
+      name:
+        type: string
+      sex:
+        type: string
+    type: object
+  DTO.ActorInput:
+    properties:
+      date:
+        type: string
+      name:
+        type: string
+      sex:
+        type: string
+    type: object
+  DTO.ActorUpdate:
+    properties:
+      date:
+        type: string
+      name:
+        type: string
+      sex:
+        type: string
+    type: object
+  DTO.FilmDTO:
+    properties:
+      actors:
+        items:
+          $ref: '#/definitions/DTO.ActorInput'
+        type: array
+      data:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      rating:
+        type: number
+    type: object
+  DTO.FilmForActor:
+    properties:
+      data:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      rating:
+        type: number
+    type: object
+  DTO.FilmInput:
+    properties:
+      actors:
+        items:
+          type: integer
+        type: array
+      data:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      rating:
+        type: number
+    type: object
+  DTO.FilmUpdate:
+    properties:
+      actors:
+        items:
+          type: integer
+        type: array
+      data:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      rating:
+        type: number
+    type: object
+  handler.UserInType:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  handler.errorResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  handler.statusResponse:
+    properties:
+      status:
+        type: string
+    type: object
+  models.User:
+    properties:
+      password:
+        type: string
+      role:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - role
+    - username
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: This is a sample server for Film library
+  title: Swagger Film library
+  version: "1.0"
+paths:
+  /api/v1/actors:
+    get:
+      consumes:
+      - application/json
+      description: get all actors
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/DTO.ActorDTO'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      summary: Get All Actors
+      tags:
+      - actors
+    post:
+      consumes:
+      - application/json
+      description: create actor
+      parameters:
+      - description: actor info
+        in: body
+        name: actorSave
+        required: true
+        schema:
+          $ref: '#/definitions/DTO.ActorInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Save Actor
+      tags:
+      - actors
+  /api/v1/actors/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: delete actor
+      parameters:
+      - description: actor id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.statusResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete Actor
+      tags:
+      - actors
+    get:
+      consumes:
+      - application/json
+      description: get actor by id
+      parameters:
+      - description: actor id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/DTO.ActorDTO'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      summary: Get Actor
+      tags:
+      - actors
+    patch:
+      consumes:
+      - application/json
+      description: update actor
+      parameters:
+      - description: actor id
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: actor update info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/DTO.ActorUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.statusResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update Actor
+      tags:
+      - actors
+  /api/v1/films:
+    get:
+      consumes:
+      - application/json
+      description: get all films
+      parameters:
+      - description: sort column
+        enum:
+        - film_name
+        - release_date
+        - rating
+        in: query
+        name: column
+        type: string
+      - description: sort order
+        enum:
+        - ASC
+        - DESC
+        in: query
+        name: order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/DTO.FilmDTO'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      summary: Get All Films
+      tags:
+      - films
+    post:
+      consumes:
+      - application/json
+      description: create film
+      parameters:
+      - description: film info
+        in: body
+        name: filmSave
+        required: true
+        schema:
+          $ref: '#/definitions/DTO.FilmInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Save Film
+      tags:
+      - films
+  /api/v1/films/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: delete film
+      parameters:
+      - description: film id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.statusResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete Film
+      tags:
+      - films
+    get:
+      consumes:
+      - application/json
+      description: get film by id
+      parameters:
+      - description: film id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/DTO.FilmDTO'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      summary: Get Film
+      tags:
+      - films
+    patch:
+      consumes:
+      - application/json
+      description: update film
+      parameters:
+      - description: film id
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: film update info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/DTO.FilmUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.statusResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update Film
+      tags:
+      - films
+  /api/v1/films/search:
+    get:
+      consumes:
+      - application/json
+      description: search films
+      parameters:
+      - description: search by q
+        in: query
+        name: q
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/DTO.FilmDTO'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      summary: Search Films
+      tags:
+      - films
+  /auth/sign-in:
+    post:
+      consumes:
+      - application/json
+      description: login
+      parameters:
+      - description: credentials
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UserInType'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: token
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      summary: Sing In
+      tags:
+      - auth
+  /auth/sign-up:
+    post:
+      consumes:
+      - application/json
+      description: create account
+      parameters:
+      - description: account info
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      summary: Sing Up
+      tags:
+      - auth
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
