@@ -155,6 +155,103 @@ func (r *FilmPostgres) GetOne(id int) (DTO.FilmDTO, error) {
 	return film, nil
 }
 
+func (r *FilmPostgres) Search(fragment string) ([]DTO.FilmDTO, error) {
+	var queryFilmsName strings.Builder
+	queryFilmsName.WriteString(fmt.Sprintf("SELECT id, film_name, description, release_date, rating FROM %s WHERE film_name LIKE ", db.FILMS))
+	queryFilmsName.WriteString("'%" + fragment + "%'")
+	log.Println(queryFilmsName.String())
+	rowsFilmsName, err := r.db.Query(queryFilmsName.String())
+	if err != nil {
+		log.Panic(err)
+		return nil, err
+	}
+	defer rowsFilmsName.Close()
+
+	films := make(map[int]DTO.FilmDTO)
+
+	for rowsFilmsName.Next() {
+		var id int
+		var filmName, description string
+		var releaseDate time.Time
+		var rating float64
+
+		if err := rowsFilmsName.Scan(&id, &filmName, &description, &releaseDate, &rating); err != nil {
+			log.Fatal(err)
+			return nil, err
+		}
+
+		actors, err := r.getActorsInFilm(id)
+		if err != nil {
+			log.Panic(err)
+			return nil, err
+		}
+
+		filmDTO := DTO.FilmDTO{
+			Name:        filmName,
+			Description: description,
+			Date:        releaseDate.Format(db.PARSEDATE),
+			Rating:      rating,
+			Actors:      actors,
+		}
+		films[id] = filmDTO
+	}
+
+	var queryActorsName strings.Builder
+	queryActorsName.WriteString(fmt.Sprintf("SELECT id FROM %s WHERE actor_name LIKE ", db.ACTORS))
+	queryActorsName.WriteString("'%" + fragment + "%'")
+	log.Println(queryActorsName.String())
+	rowsActorsName, err := r.db.Query(queryActorsName.String())
+	if err != nil {
+		log.Panic(err)
+		return nil, err
+	}
+	defer rowsActorsName.Close()
+
+	actorsId := make([]int, 0)
+
+	for rowsActorsName.Next() {
+		var id int
+		if err := rowsActorsName.Scan(&id); err != nil {
+			log.Fatal(err)
+			return nil, err
+		}
+		actorsId = append(actorsId, id)
+	}
+
+	queryFilms := fmt.Sprintf("SELECT film_id FROM %s WHERE actor_id=$1", db.FILMACTOR)
+
+	filmsId := make([]int, 0)
+	for _, actorId := range actorsId {
+		rows, err := r.db.Query(queryFilms, actorId)
+		if err != nil {
+			log.Panic(err)
+			return nil, err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var filmId int
+			rows.Scan(&filmId)
+			filmsId = append(filmsId, filmId)
+		}
+		rows.Close()
+	}
+
+	for _, filmId := range filmsId {
+		film, err := r.GetOne(filmId)
+		if err != nil {
+			return nil, err
+		}
+		films[filmId] = film
+	}
+
+	filmsDTO := make([]DTO.FilmDTO, 0)
+	for _, v := range films {
+		filmsDTO = append(filmsDTO, v)
+	}
+	return filmsDTO, nil
+}
+
 func (r *FilmPostgres) Create(film models.Film, actorsId []int) (int, error) {
 	tx, err := r.db.Begin()
 	if err != nil {
@@ -248,7 +345,6 @@ func (r *FilmPostgres) Update(id int, input DTO.FilmUpdate) error {
 			return err
 		}
 	}
-
 	return tx.Commit()
 }
 

@@ -21,6 +21,10 @@ func (s *FilmService) GetFilm(id int) (DTO.FilmDTO, error) {
 	return s.repo.GetOne(id)
 }
 
+func (s *FilmService) SearchFilms(fragment string) ([]DTO.FilmDTO, error) {
+	return s.repo.Search(fragment)
+}
+
 func (s *FilmService) CreateFilm(film models.Film, arr []int) (int, error) {
 	return s.repo.Create(film, arr)
 }

@@ -24,6 +24,7 @@ type Actor interface {
 type Film interface {
 	GetAll(column, order string) ([]DTO.FilmDTO, error)
 	GetOne(id int) (DTO.FilmDTO, error)
+	Search(fragment string) ([]DTO.FilmDTO, error)
 	Create(film models.Film, arr []int) (int, error)
 	Update(id int, input DTO.FilmUpdate) error
 	Delete(id int) error

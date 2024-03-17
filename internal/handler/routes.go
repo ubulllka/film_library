@@ -22,16 +22,17 @@ func (h *Handler) Routes() *mux.Router {
 	api.Use(h.UserIdentify)
 
 	actors := api.PathPrefix("/actors").Subrouter()
-	actors.HandleFunc("/", h.GetALLActors).Methods("GET")
+	actors.HandleFunc("", h.GetALLActors).Methods("GET")
 	actors.HandleFunc("/{id}", h.GetActor).Methods("GET")
-	actors.HandleFunc("/", h.SaveActor).Methods("POST")
+	actors.HandleFunc("", h.SaveActor).Methods("POST")
 	actors.HandleFunc("/{id}", h.UpdateActor).Methods("PATCH")
 	actors.HandleFunc("/{id}", h.DeleteActor).Methods("DELETE")
 
 	films := api.PathPrefix("/films").Subrouter()
-	films.HandleFunc("/", h.GetALLFilms).Methods("GET")
+	films.HandleFunc("", h.GetALLFilms).Methods("GET")
+	films.HandleFunc("/search", h.SearchFilms).Methods("GET")
 	films.HandleFunc("/{id}", h.GetFilm).Methods("GET")
-	films.HandleFunc("/", h.SaveFilm).Methods("POST")
+	films.HandleFunc("", h.SaveFilm).Methods("POST")
 	films.HandleFunc("/{id}", h.UpdateFilm).Methods("PATCH")
 	films.HandleFunc("/{id}", h.DeleteFilm).Methods("DELETE")
 

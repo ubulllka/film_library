@@ -7,7 +7,6 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
-	"log"
 	"net/http"
 	"strconv"
 	"vk/internal/models/DTO"
@@ -16,7 +15,6 @@ import (
 func (h *Handler) GetALLFilms(w http.ResponseWriter, r *http.Request) {
 	column := r.URL.Query().Get("column")
 	order := r.URL.Query().Get("order")
-	log.Println(column, order)
 
 	films, err := h.service.Film.GetAllFilms(column, order)
 	if err != nil {
@@ -58,6 +56,26 @@ func (h *Handler) GetFilm(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(filmByte)
+}
+
+func (h *Handler) SearchFilms(w http.ResponseWriter, r *http.Request) {
+	fragment := r.URL.Query().Get("fragment")
+
+	films, err := h.service.Film.SearchFilms(fragment)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	filmsByte, err := json.Marshal(films)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(filmsByte)
 }
 
 func (h *Handler) SaveFilm(w http.ResponseWriter, r *http.Request) {

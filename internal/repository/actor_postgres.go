@@ -20,7 +20,7 @@ func NewActorPostgres(db *sql.DB) *ActorPostgres {
 	return &ActorPostgres{db: db}
 }
 
-func (r *ActorPostgres) getFilmNames(id int) ([]string, error) {
+func (r *ActorPostgres) getFilmNames(id int) ([]DTO.FilmForActor, error) {
 	var filmsID []int
 	queryFilm := fmt.Sprintf("SELECT film_id FROM %s WHERE actor_id=$1", db.FILMACTOR)
 	rows, err := r.db.Query(queryFilm, id)
@@ -37,20 +37,29 @@ func (r *ActorPostgres) getFilmNames(id int) ([]string, error) {
 	}
 	rows.Close()
 
-	filmsNames := make([]string, 0)
+	films := make([]DTO.FilmForActor, 0)
 	for _, filmId := range filmsID {
-		queryName := fmt.Sprintf("SELECT film_name FROM %s WHERE id=$1", db.FILMS)
+		queryName := fmt.Sprintf("SELECT film_name, description, release_date, rating FROM %s WHERE id=$1", db.FILMS)
 		rowsName := r.db.QueryRow(queryName, filmId)
 
-		var fName string
-		if err := rowsName.Scan(&fName); err != nil {
+		var filmName, description string
+		var releaseDate time.Time
+		var rating float64
+		if err := rowsName.Scan(&filmName, &description, &releaseDate, &rating); err != nil {
 			log.Panic(err)
 			return nil, err
 		}
 
-		filmsNames = append(filmsNames, fName)
+		film := DTO.FilmForActor{
+			Name:        filmName,
+			Description: description,
+			Date:        releaseDate.Format(db.PARSEDATE),
+			Rating:      rating,
+		}
+
+		films = append(films, film)
 	}
-	return filmsNames, nil
+	return films, nil
 }
 
 func (r *ActorPostgres) GetAll() ([]DTO.ActorDTO, error) {
@@ -73,7 +82,7 @@ func (r *ActorPostgres) GetAll() ([]DTO.ActorDTO, error) {
 			return nil, err
 		}
 
-		filmsNames, err := r.getFilmNames(id)
+		films, err := r.getFilmNames(id)
 		if err != nil {
 			log.Panic(err)
 			return nil, err
@@ -83,7 +92,7 @@ func (r *ActorPostgres) GetAll() ([]DTO.ActorDTO, error) {
 			Name:  actorName,
 			Sex:   sex,
 			Date:  bDate.Format(db.PARSEDATE),
-			Films: filmsNames,
+			Films: films,
 		}
 		actorsDTO = append(actorsDTO, act)
 	}
