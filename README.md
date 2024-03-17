@@ -1,1 +1,1 @@
-docs: http://localhost:8080/swagger/index.html
+api-docs: http://localhost:8080/swagger/index.html
