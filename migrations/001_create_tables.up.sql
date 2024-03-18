@@ -25,5 +25,3 @@ CREATE TABLE IF NOT EXISTS film_actor(
     film_id     INT REFERENCES films(id) ON DELETE CASCADE  NOT NULL,
     actor_id    INT REFERENCES actors(id) ON DELETE CASCADE NOT NULL
 );
-
-

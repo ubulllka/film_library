@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-playground/validator/v10"
+	"log"
 	"net/http"
 	"vk/internal/models"
 )
@@ -43,8 +44,9 @@ func (h *Handler) SingUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Println("SingUp is ok")
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte(fmt.Sprintf("{ \"id\": %d}", id)))
+	_, _ = w.Write([]byte(fmt.Sprintf(`{"id": %d}`, id)))
 }
 
 type UserInType struct {
@@ -88,6 +90,7 @@ func (h *Handler) SingIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Println("SingIn is ok")
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte(fmt.Sprintf("{ \"token\": \"%s\"}", token)))
+	_, _ = w.Write([]byte(fmt.Sprintf("{\"token\": \"%s\"}", token)))
 }

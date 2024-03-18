@@ -15,7 +15,7 @@ type statusResponse struct {
 }
 
 func newErrorResponse(w http.ResponseWriter, statusCode int, message string) {
-	log.Panic(message)
+	log.Println(message)
 	w.WriteHeader(statusCode)
 	result, _ := json.Marshal(errorResponse{message})
 	_, _ = w.Write(result)

@@ -10,7 +10,7 @@ var CONFIG Config
 type Config struct {
 	Env    string `yaml:"env"`
 	Server struct {
-		URL string `yaml:"address" env-default:"localhost:8080"`
+		URL string `yaml:"url"`
 	} `yaml:"server"`
 	DB struct {
 		User     string `yaml:"user"`
@@ -27,7 +27,7 @@ func InitConfig() error {
 		log.Fatal(err)
 		return err
 	}
-	log.Print("Init config")
+	log.Println("Init config")
 	return nil
 }
 

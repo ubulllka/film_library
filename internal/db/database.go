@@ -68,6 +68,7 @@ func InitializeDB() (*sql.DB, error) {
 
 	if err := runMigrations(db, info.Path); err != nil {
 		log.Fatalf("Error applying migrations: %v", err)
+		return nil, err
 	}
 
 	log.Print("Init database")

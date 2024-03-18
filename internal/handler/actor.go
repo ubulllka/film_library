@@ -5,14 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-playground/validator/v10"
-	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
+	"log"
 	"net/http"
 	"strconv"
 	"vk/internal/models/DTO"
 )
 
-// GetALLActors
+// GetAllActors
 // @Summary		Get All Actors
 // @Tags		actors
 // @Description	get all actors
@@ -22,7 +22,7 @@ import (
 // @Failure		500		{object}	errorResponse
 // @Failure		default	{object}	errorResponse
 // @Router		/api/v1/actors [get]
-func (h *Handler) GetALLActors(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetAllActors(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	actors, err := h.service.Actor.GetAllActors()
@@ -37,6 +37,7 @@ func (h *Handler) GetALLActors(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Println("GetAllActors is ok")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(actorsByte)
 }
@@ -75,6 +76,7 @@ func (h *Handler) GetActor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Println("GetActor with id - " + strconv.Itoa(id))
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(actorByte)
 }
@@ -95,7 +97,8 @@ func (h *Handler) GetActor(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) SaveActor(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	userRole := context.Get(r, USERROLE)
+	//userRole := context.Get(r, USERROLE)
+	userRole := r.Context().Value(USERROLE)
 	fmt.Println(userRole)
 	if userRole != "ADMIN" {
 		newErrorResponse(w, http.StatusForbidden, errors.New("not enough rights").Error())
@@ -128,8 +131,9 @@ func (h *Handler) SaveActor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Println("SaveActor with id " + strconv.Itoa(id))
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte(fmt.Sprintf("{ \"id\": %d}", id)))
+	_, _ = w.Write([]byte(fmt.Sprintf(`{"id": %d}`, id)))
 
 }
 
@@ -157,7 +161,8 @@ func (h *Handler) UpdateActor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userRole := context.Get(r, USERROLE)
+	//userRole := context.Get(r, USERROLE)
+	userRole := r.Context().Value(USERROLE)
 	if userRole != "ADMIN" {
 		newErrorResponse(w, http.StatusForbidden, errors.New("not enough rights").Error())
 		return
@@ -174,6 +179,7 @@ func (h *Handler) UpdateActor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Println("UpdateActor with id - " + strconv.Itoa(id))
 	w.WriteHeader(http.StatusOK)
 	result, _ := json.Marshal(statusResponse{"ok"})
 	_, _ = w.Write(result)
@@ -202,7 +208,8 @@ func (h *Handler) DeleteActor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userRole := context.Get(r, USERROLE)
+	//userRole := context.Get(r, USERROLE)
+	userRole := r.Context().Value(USERROLE)
 	if userRole != "ADMIN" {
 		newErrorResponse(w, http.StatusForbidden, errors.New("not enough rights").Error())
 		return
@@ -213,6 +220,7 @@ func (h *Handler) DeleteActor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Println("DeleteActor with id - " + strconv.Itoa(id))
 	w.WriteHeader(http.StatusOK)
 	result, _ := json.Marshal(statusResponse{"ok"})
 	_, _ = w.Write(result)

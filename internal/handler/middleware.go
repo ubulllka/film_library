@@ -1,7 +1,9 @@
 package handler
 
 import (
-	"github.com/gorilla/context"
+	"context"
+	//"github.com/gorilla/context"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -13,6 +15,7 @@ const (
 func (h *Handler) UserIdentify(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		header := r.Header.Get("Authorization")
+		w.Header().Set("Content-Type", "application/json")
 		if header == "" {
 			newErrorResponse(w, http.StatusUnauthorized, "empty auth header")
 			return
@@ -25,7 +28,7 @@ func (h *Handler) UserIdentify(next http.Handler) http.Handler {
 
 		userId, err := h.service.Authorization.ParseToken(headerPart[1])
 		if err != nil {
-			newErrorResponse(w, http.StatusUnauthorized, "invalid auth header part")
+			newErrorResponse(w, http.StatusUnauthorized, err.Error())
 			return
 		}
 		user, err := h.service.Authorization.GetUser(userId)
@@ -34,7 +37,10 @@ func (h *Handler) UserIdentify(next http.Handler) http.Handler {
 			return
 		}
 
-		context.Set(r, USERROLE, user.Role)
+		log.Println("User with role - " + user.Role)
+		ctx := context.WithValue(context.Background(), "userRole", user.Role)
+		r.WithContext(ctx)
+		//context.Set(r, USERROLE, user.Role)
 		next.ServeHTTP(w, r)
 	})
 }

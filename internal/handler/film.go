@@ -7,6 +7,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
+	"log"
 	"net/http"
 	"strconv"
 	"vk/internal/models/DTO"
@@ -14,17 +15,17 @@ import (
 
 // GetAllFilms
 // @Summary		Get All Films
-// @Tags			films
+// @Tags		films
 // @Description	get all films
-// @Accept			json
+// @Accept		json
 // @Produce		json
-// @Param			column	query		string	false	"sort column"	Enums(film_name, release_date, rating)
-// @Param			order	query		string	false	"sort order"	Enums(ASC, DESC)
+// @Param		column	query		string	false	"sort column"	Enums(film_name, release_date, rating)
+// @Param		order	query		string	false	"sort order"	Enums(ASC, DESC)
 // @Success		200		{array}		DTO.FilmDTO
 // @Failure		500		{object}	errorResponse
 // @Failure		default	{object}	errorResponse
-// @Router			/api/v1/films [get]
-func (h *Handler) GetALLFilms(w http.ResponseWriter, r *http.Request) {
+// @Router		/api/v1/films [get]
+func (h *Handler) GetAllFilms(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	column := r.URL.Query().Get("column")
@@ -42,26 +43,26 @@ func (h *Handler) GetALLFilms(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Println("GetAllFilms with column - " + column + "; order - " + order)
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(filmsByte)
 }
 
 // SearchFilms
 // @Summary		Search Films
-// @Tags			films
+// @Tags		films
 // @Description	search films
-// @Accept			json
+// @Accept		json
 // @Produce		json
-// @Param			q		query		string	false	"search by q"
+// @Param		q		query		string	false	"search by q"
 // @Success		200		{array}		DTO.FilmDTO
 // @Failure		500		{object}	errorResponse
 // @Failure		default	{object}	errorResponse
-// @Router			/api/v1/films/search [get]
+// @Router		/api/v1/films/search [get]
 func (h *Handler) SearchFilms(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	fragment := r.URL.Query().Get("q")
-
 	films, err := h.service.Film.SearchFilms(fragment)
 	if err != nil {
 		newErrorResponse(w, http.StatusInternalServerError, err.Error())
@@ -74,22 +75,23 @@ func (h *Handler) SearchFilms(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Println("SearchFilms with q - " + fragment)
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(filmsByte)
 }
 
 // GetFilm
 // @Summary		Get Film
-// @Tags			films
+// @Tags		films
 // @Description	get film by id
-// @Accept			json
+// @Accept		json
 // @Produce		json
-// @Param			id		path		int	true	"film id"
+// @Param		id		path		int	true	"film id"
 // @Success		200		{array}		DTO.FilmDTO
 // @Failure		400		{object}	errorResponse
 // @Failure		500		{object}	errorResponse
 // @Failure		default	{object}	errorResponse
-// @Router			/api/v1/films/{id} [get]
+// @Router		/api/v1/films/{id} [get]
 func (h *Handler) GetFilm(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -112,6 +114,7 @@ func (h *Handler) GetFilm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Println("GetFilm with id - " + strconv.Itoa(id))
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(filmByte)
 }
@@ -164,8 +167,9 @@ func (h *Handler) SaveFilm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Println("SaveFilm with id - " + strconv.Itoa(id))
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte(fmt.Sprintf("{ \"id\": %d}", id)))
+	_, _ = w.Write([]byte(fmt.Sprintf(`{"id": %d}`, id)))
 }
 
 // UpdateFilm
@@ -209,6 +213,7 @@ func (h *Handler) UpdateFilm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Println("UpdateFilm with id - " + strconv.Itoa(id))
 	w.WriteHeader(http.StatusOK)
 	result, _ := json.Marshal(statusResponse{"ok"})
 	_, _ = w.Write(result)
@@ -248,6 +253,7 @@ func (h *Handler) DeleteFilm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Println("DeleteFilm with id - " + strconv.Itoa(id))
 	w.WriteHeader(http.StatusOK)
 	result, _ := json.Marshal(statusResponse{"ok"})
 	_, _ = w.Write(result)
